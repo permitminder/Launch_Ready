@@ -1,0 +1,145 @@
+<!-- test-clickable-rows.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clickable Rows Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        tbody tr:active {
+            background-color: #e0e0e0;
+        }
+        
+        #details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .selected {
+            background-color: #e3f2fd !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clickable Rows Test</h1>
+    <p>Click on any row to see the details below:</p>
+    
+    <table id="testTable">
+        <thead>
+            <tr>
+                <th>Permit Number</th>
+                <th>Facility</th>
+                <th>County</th>
+                <th>Exceedances</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-permit="PA0004979" data-facility="NEVILLE CHEM CO" data-county="Allegheny" data-exceedances="56">
+                <td>PA0004979</td>
+                <td>NEVILLE CHEM CO</td>
+                <td>Allegheny</td>
+                <td>56</td>
+            </tr>
+            <tr data-permit="PA0013820" data-facility="BRACKENRIDGE FAC" data-county="Allegheny" data-exceedances="2">
+                <td>PA0013820</td>
+                <td>BRACKENRIDGE FAC</td>
+                <td>Allegheny</td>
+                <td>2</td>
+            </tr>
+            <tr data-permit="PA0020681" data-facility="SEWICKLEY BORO STP" data-county="Allegheny" data-exceedances="63">
+                <td>PA0020681</td>
+                <td>SEWICKLEY BORO STP</td>
+                <td>Allegheny</td>
+                <td>63</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div id="details">
+        <h3>Selected Row Details:</h3>
+        <p id="detailsContent"></p>
+    </div>
+    
+    <script>
+        // Get all rows in tbody
+        const rows = document.querySelectorAll('#testTable tbody tr');
+        const detailsDiv = document.getElementById('details');
+        const detailsContent = document.getElementById('detailsContent');
+        
+        // Add click event to each row
+        rows.forEach(row => {
+            row.addEventListener('click', function() {
+                // Remove selected class from all rows
+                rows.forEach(r => r.classList.remove('selected'));
+                
+                // Add selected class to clicked row
+                this.classList.add('selected');
+                
+                // Get data from clicked row
+                const permit = this.dataset.permit;
+                const facility = this.dataset.facility;
+                const county = this.dataset.county;
+                const exceedances = this.dataset.exceedances;
+                
+                // Display details
+                detailsContent.innerHTML = `
+                    <strong>Permit Number:</strong> ${permit}<br>
+                    <strong>Facility:</strong> ${facility}<br>
+                    <strong>County:</strong> ${county}<br>
+                    <strong>Exceedances:</strong> ${exceedances}
+                `;
+                
+                detailsDiv.style.display = 'block';
+                
+                // Log to console for debugging
+                console.log('Row clicked:', {permit, facility, county, exceedances});
+            });
+        });
+        
+        // Alternative approach using event delegation (more efficient for dynamic content)
+        document.getElementById('testTable').addEventListener('click', function(e) {
+            // Find the clicked row
+            const clickedRow = e.target.closest('tbody tr');
+            
+            if (clickedRow) {
+                console.log('Event delegation: Row clicked', clickedRow.dataset);
+            }
+        });
+    </script>
+</body>
+</html>
