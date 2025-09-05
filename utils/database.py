@@ -10,16 +10,56 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
+def find_csv_files(base_dir: Optional[str] = None) -> List[str]:
+    """
+    Find potential CSV files for data loading.
+
+    Args:
+        base_dir (str, optional): Base directory to search. 
+                                  Defaults to current directory or user's desktop.
+
+    Returns:
+        List[str]: List of potential CSV file paths
+    """
+    # Default search paths
+    search_paths = [
+        os.path.join(os.path.expanduser('~'), 'Desktop', 'Launch_Ready'),
+        os.path.join(os.getcwd()),
+        os.path.join(os.path.expanduser('~'), 'Documents', 'Launch_Ready')
+    ]
+
+    # Add custom base directory if provided
+    if base_dir:
+        search_paths.insert(0, base_dir)
+
+    # Potential CSV filenames to look for
+    csv_patterns = [
+        'pa_exceedances_launch_ready.csv',
+        'trimmed_pa_exceedances_2020_2024.csv',
+        'exceedances.csv',
+        'permit_data.csv'
+    ]
+
+    # Find matching CSV files
+    matching_files = []
+    for path in search_paths:
+        for pattern in csv_patterns:
+            full_path = os.path.join(path, pattern)
+            if os.path.exists(full_path):
+                matching_files.append(full_path)
+
+    return matching_files
+
 def load_data(
-    primary_file: str = '/Users/ameliaminder/Desktop/Launch_Ready/pa_exceedances_launch_ready.csv',
-    backup_file: str = '/Users/ameliaminder/Desktop/Launch_Ready/trimmed_pa_exceedances_2020_2024.csv'
+    primary_file: Optional[str] = None,
+    backup_file: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Load and cache permit exceedance data from CSV file.
 
     Args:
-        primary_file (str, optional): Primary CSV file path.
-        backup_file (str, optional): Backup CSV file path.
+        primary_file (str, optional): Specific primary CSV file path.
+        backup_file (str, optional): Specific backup CSV file path.
 
     Returns:
         pd.DataFrame: Loaded and processed DataFrame of permit exceedances.
@@ -56,24 +96,33 @@ def load_data(
 
             return df
 
-        except FileNotFoundError:
-            st.error(f"Error: File not found at {path}")
-            return pd.DataFrame()
         except Exception as e:
-            st.error(f"Unexpected error loading data: {e}")
+            st.error(f"Error loading data from {path}: {e}")
             return pd.DataFrame()
 
-    # Try primary file first
-    if os.path.exists(primary_file):
+    # Prioritize explicitly provided files
+    if primary_file and os.path.exists(primary_file):
         return _cached_load_data(primary_file)
     
-    # If primary file doesn't exist, try backup
-    if os.path.exists(backup_file):
+    if backup_file and os.path.exists(backup_file):
         st.warning(f"Primary file not found. Using backup file: {backup_file}")
         return _cached_load_data(backup_file)
     
-    # If both files are missing, raise an error
-    st.error("No data files found. Please check file paths.")
+    # Find available CSV files
+    available_files = find_csv_files()
+    
+    # Try loading from available files
+    for file in available_files:
+        try:
+            df = _cached_load_data(file)
+            if not df.empty:
+                st.info(f"Loaded data from: {file}")
+                return df
+        except Exception:
+            continue
+    
+    # If no files found
+    st.error("No suitable data files found. Please check your data sources.")
     return pd.DataFrame()
 
 def _ensure_columns(df: pd.DataFrame) -> None:
