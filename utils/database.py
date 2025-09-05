@@ -68,12 +68,6 @@ def load_data(
     def _cached_load_data(path: str) -> pd.DataFrame:
         """
         Internal cached function to load data with additional processing.
-
-        Args:
-            path (str): File path to the CSV file.
-
-        Returns:
-            pd.DataFrame: Processed DataFrame with additional columns and type conversions.
         """
         try:
             # Load the raw data
@@ -91,7 +85,7 @@ def load_data(
                 if col in df.columns:
                     df[col] = pd.to_datetime(df[col], errors='coerce')
 
-            # Calculate severity 
+            # Calculate severity
             df['SEVERITY'] = _calculate_severity(df)
 
             return df
@@ -100,29 +94,24 @@ def load_data(
             st.error(f"Error loading data from {path}: {e}")
             return pd.DataFrame()
 
-    # Prioritize explicitly provided files
-    if primary_file and os.path.exists(primary_file):
-        return _cached_load_data(primary_file)
+    # SIMPLIFIED PATH LOGIC FOR DEPLOYMENT
+    possible_paths = [
+        'pa_exceedances_launch_ready.csv',  # Root directory
+        'archive_2025_09_06_before_refactor/pa_exceedances_launch_ready.csv',  # Archive folder
+        'Launch_Ready/pa_exceedances_launch_ready.csv',  # Launch_Ready folder
+        primary_file,  # Custom path if provided
+        backup_file  # Backup path if provided
+    ]
     
-    if backup_file and os.path.exists(backup_file):
-        st.warning(f"Primary file not found. Using backup file: {backup_file}")
-        return _cached_load_data(backup_file)
+    # Try each path
+    for path in possible_paths:
+        if path and os.path.exists(path):
+            print(f"Loading data from: {path}")
+            return _cached_load_data(path)
     
-    # Find available CSV files
-    available_files = find_csv_files()
-    
-    # Try loading from available files
-    for file in available_files:
-        try:
-            df = _cached_load_data(file)
-            if not df.empty:
-                st.info(f"Loaded data from: {file}")
-                return df
-        except Exception:
-            continue
-    
-    # If no files found
-    st.error("No suitable data files found. Please check your data sources.")
+    # If no file found, show error
+    st.error("Could not find pa_exceedances_launch_ready.csv in any expected location!")
+    st.error(f"Searched in: {possible_paths}")
     return pd.DataFrame()
 
 def _ensure_columns(df: pd.DataFrame) -> None:
