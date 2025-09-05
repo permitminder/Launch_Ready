@@ -6,7 +6,7 @@ This module handles routing, session state management, and the core application 
 
 import streamlit as st
 import pandas as pd
-from typing import Optional
+from typing import Optional 
 
 # Import page modules
 from pages.search import show_search_page
@@ -14,6 +14,9 @@ from pages.permit_details import show_details_page
 from pages.dashboard import show_dashboard_page
 from pages.email_alerts import show_email_alerts_page
 from utils.database import load_data
+# Add these new imports
+from utils.charts import render_charts
+from utils.data_tables import render_data_tables
 
 def apply_custom_styling() -> None:
     """
@@ -76,21 +79,24 @@ def sidebar_navigation() -> None:
         st.sidebar.markdown("---")
 
     # Navigation radio
-    view_options = ["🔍 Search Records", "📧 Email Alerts", "📊 Dashboard"]
-    view_index = (
-        0 if st.session_state.current_view == 'search' 
-        else 1 if st.session_state.current_view == 'email' 
-        else 2
-    )
+    view_options = [
+        "🔍 Search Records", 
+        "📊 Data Visualizations", 
+        "📋 Data Tables", 
+        "📧 Email Alerts", 
+        "🗂️ Dashboard"
+    ]
     
-    view = st.sidebar.radio("Go to:", view_options, index=view_index)
-
-    # View selection mapping
+    # Adjust view index logic
     view_mapping = {
         "🔍 Search Records": ('search', 'search'),
+        "📊 Data Visualizations": ('charts', 'charts'),
+        "📋 Data Tables": ('tables', 'tables'),
         "📧 Email Alerts": ('email', 'email'),
-        "📊 Dashboard": ('dashboard', 'dashboard')
+        "🗂️ Dashboard": ('dashboard', 'dashboard')
     }
+
+    view = st.sidebar.radio("Go to:", view_options)
 
     # Set current view and page based on selection
     st.session_state.current_view, st.session_state.current_page = view_mapping.get(
@@ -113,12 +119,19 @@ def main() -> None:
     apply_custom_styling()
     initialize_session_state()
     
+    # Load data once
+    df = load_data()
+    
     # Sidebar navigation
     sidebar_navigation()
     
     # Routing logic
     if st.session_state.current_page == 'details' and st.session_state.selected_permit:
         show_details_page()
+    elif st.session_state.current_view == 'charts':
+        render_charts(df)
+    elif st.session_state.current_view == 'tables':
+        render_data_tables(df)
     elif st.session_state.current_view == 'email':
         show_email_alerts_page()
     elif st.session_state.current_view == 'dashboard':
