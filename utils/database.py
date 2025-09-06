@@ -198,35 +198,40 @@ def filter_exceedances(
     severity: Optional[str] = None
 ) -> pd.DataFrame:
     """
-    Apply advanced filtering to exceedance records.
-
-    Args:
-        df (pd.DataFrame): Input DataFrame of exceedance records.
-        county (str, optional): Filter by county name.
-        facility (str, optional): Filter by facility name.
-        parameter (str, optional): Filter by specific parameter.
-        start_date (datetime, optional): Start of date range filter.
-        end_date (datetime, optional): End of date range filter.
-        severity (str, optional): Filter by severity level.
-
-    Returns:
-        pd.DataFrame: Filtered DataFrame matching specified criteria.
+    Apply advanced filtering to exceedance records with detailed logging.
     """
+    # Initial DataFrame size
+    initial_size = len(df)
+    
+    # Detailed logging of input parameters
+    st.write("Filtering Parameters:")
+    st.write(f"Total initial records: {initial_size}")
+    st.write(f"County filter: {county}")
+    st.write(f"Facility filter: {facility}")
+    st.write(f"Parameter filter: {parameter}")
+    st.write(f"Start Date: {start_date}")
+    st.write(f"End Date: {end_date}")
+    st.write(f"Severity filter: {severity}")
+
+    # Create a copy of the DataFrame
     filtered_df = df.copy()
 
     # County filter
     if county and county != 'All County Names':
         filtered_df = filtered_df[filtered_df['COUNTY_NAME'] == county]
+        st.write(f"Records after county filter: {len(filtered_df)}")
 
     # Facility name filter
     if facility:
         filtered_df = filtered_df[
             filtered_df['PF_NAME'].str.contains(facility, case=False, na=False)
         ]
+        st.write(f"Records after facility filter: {len(filtered_df)}")
 
     # Parameter filter
     if parameter and parameter != 'All Parameters':
         filtered_df = filtered_df[filtered_df['PARAMETER'] == parameter]
+        st.write(f"Records after parameter filter: {len(filtered_df)}")
 
     # Date range filter
     if start_date and end_date:
@@ -234,10 +239,12 @@ def filter_exceedances(
             (filtered_df['NON_COMPLIANCE_DATE'] >= start_date) & 
             (filtered_df['NON_COMPLIANCE_DATE'] <= end_date)
         ]
+        st.write(f"Records after date filter: {len(filtered_df)}")
 
     # Severity filter
     if severity and severity != 'All Severities':
         filtered_df = filtered_df[filtered_df['SEVERITY'] == severity]
+        st.write(f"Records after severity filter: {len(filtered_df)}")
 
     return filtered_df
 
